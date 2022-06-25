@@ -3,19 +3,37 @@ import itertools as it
 import copy
 
 DEC = 2
+PRINT_DEC = 2
 
-# Задание параметров задачи #
-print("\n##### УСЛОВИЕ #####\n")
+# Задание параметров задач #
+######################################################################################
 # матрица условий
-A = np.array([np.array([3, 4, 6, 1, -1]),
+A1 = np.array([np.array([3, 4, 6, 1, -1]),
               np.array([2, 0, -3, 2, 0]),
               np.array([-1, 2, 0, 1, 2])])
 # вектор ограничений
-B = np.array([2, 10, 14])
+B1 = np.array([2, 10, 14])
 # вектор коэффициентов целевой функции
-C = np.array([7, -2, 0, 3, 1])
-
-print("Коэффициенты целевой функции:", C, "Матрица условий:", A, "Вектор ограничений:", B, sep="\n")
+C1 = np.array([7, -2, 0, 3, 1])
+######################################################################################
+# матрица условий
+A2 = np.array([np.array([2, -1, 0, -2, 1, 0]),
+              np.array([3, 2, 1, -3, 0, 0]),
+              np.array([-1, 3, 0, 4, 0, 1])])
+# вектор ограничений
+B2 = np.array([16, 18, 24])
+# вектор коэффициентов целевой функции
+C2 = np.array([2, 3, 0, -1, 0, 0])
+######################################################################################
+# матрица условий
+A3 = np.array([np.array([0, -1, 1, 1, 0]),
+              np.array([-5, 1, 1, 0, 0]),
+              np.array([-8, 1, 2, 0, -1])])
+# вектор ограничений
+B3 = np.array([1, 2, 3])
+# вектор коэффициентов целевой функции
+C3 = np.array([-3, 1, 4, 0, 0])
+######################################################################################
 
 
 def find_accept_basis(A, C):
@@ -82,7 +100,8 @@ def print_results(simplex_table):
     print("Итоговое значение целевой функции:", np.around(simplex_table[0, 1], decimals=2))
     for i in range(1, simplex_table.shape[1] - 1):
         if i in simplex_table[1:, 0]:
-            print("x_"+str(i), "=", np.around(simplex_table[np.where(simplex_table[1:, 0] == i)[0][0] + 1, 1], decimals=2))
+            print("x_"+str(i), "=",
+                  np.around(simplex_table[np.where(simplex_table[1:, 0] == i)[0][0] + 1, 1], decimals=PRINT_DEC))
         else:
             print("x_"+str(i), "=", 0)
 
@@ -98,16 +117,26 @@ def do_simplex(A, B, C):
 
     # составляем из блоков первую симплекс таблицу
     simplex_table = build_table(a, a0, b, b0, N)
-    print("1-й шаг:", np.around(simplex_table, decimals=2), sep="\n")
+    print("1-й шаг:", np.around(simplex_table, decimals=PRINT_DEC), sep="\n")
 
     # делаем шаги симплекс метода
     i = 1
     while np.any(np.around(simplex_table[1:, 1], decimals=DEC) < 0):
         i += 1
         simplex_table = update_table(simplex_table)
-        print("\n"+str(i)+"-й шаг:", np.around(simplex_table, decimals=2), sep="\n")
+        print("\n"+str(i)+"-й шаг:", np.around(simplex_table, decimals=PRINT_DEC), sep="\n")
     print("\n##### ОТВЕТ #####\n")
     print_results(simplex_table)
 
 
-do_simplex(A, B, C)
+print("\n##### УСЛОВИЕ #####\n")
+print("Коэффициенты целевой функции:", C1, "Матрица условий:", A1, "Вектор ограничений:", B1, sep="\n")
+do_simplex(A1, B1, C1)
+
+print("\n##### УСЛОВИЕ #####\n")
+print("Коэффициенты целевой функции:", C2, "Матрица условий:", A2, "Вектор ограничений:", B2, sep="\n")
+do_simplex(A2, B2, C2)
+
+print("\n##### УСЛОВИЕ #####\n")
+print("Коэффициенты целевой функции:", C3, "Матрица условий:", A3, "Вектор ограничений:", B3, sep="\n")
+do_simplex(A3, B3, C3)
