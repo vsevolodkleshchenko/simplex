@@ -36,14 +36,13 @@ C3 = np.array([-3, 1, 4, 0, 0])
 ######################################################################################
 
 
-def find_accept_basis(A, C):
+def find_accept_basis(A, B, C):
     """ Ищем допустимый базис
     Возвращает: массив номеров базисных столбцов,
                 матрицу обратную к "дельта(бэта)",
                 массив "с(бэта)",
                 массив "u * A - c" """
-    rank = np.linalg.matrix_rank(A)
-    combs = list(it.combinations(np.arange(A.shape[1]), rank))
+    combs = list(it.combinations(np.arange(A.shape[1]), B.shape[0]))
     for comb in combs:
         delta = A[:, comb]
         c = np.array([C[i] for i in comb])
@@ -55,6 +54,8 @@ def find_accept_basis(A, C):
             N = np.array(list(comb))
             print("Допустимый базис может быть составлен из:", *(N + 1), "столбцов\n")
             return N, delta_1, c, uA_c
+    print("Допустимый базис не найден. Система не имеет решений либо функция не ограничена сверху.")
+    raise SystemExit
 
 
 def build_table(a, a0, b, b0, N):
@@ -70,6 +71,22 @@ def build_table(a, a0, b, b0, N):
     return simplex_table
 
 
+def find_in_out(table):
+    """ Находит номера вводимого (in) и выводимого (out) столбцов"""
+    a0 = table[0, 2:]
+    b = table[1:, 1]
+    a = table[1:, 2:]
+    n_out = np.where(np.around(b, decimals=DEC) < 0)[0][0]
+    n_ = np.where(np.around(a, decimals=DEC)[n_out] < 0)[0]
+    if not n_.any():
+        print("Не найдено отрицательных компонент при определении номера вводимого столбца. МДП пусто.")
+        raise SystemExit
+    n_ = n_[0]
+    minimal = np.min(- a0[n_] / a[n_out, n_])
+    n_in = np.intersect1d(np.where(- a0 / a[n_out] == minimal)[0], n_)[0]
+    return n_in + 2, n_out + 1
+
+
 def update_table(table):
     """ Обновляет симплекс таблицу
      Возвращается новая симплекс таблица"""
@@ -83,20 +100,15 @@ def update_table(table):
     return new_table
 
 
-def find_in_out(table):
-    """ Находит номера вводимого (in) и выводимого (out) столбцов"""
-    a0 = table[0, 2:]
-    b = table[1:, 1]
-    a = table[1:, 2:]
-    n_out = np.where(np.around(b, decimals=DEC) < 0)[0][0]
-    n_ = np.where(np.around(a, decimals=DEC)[n_out] < 0)[0]
-    minimal = np.min(- a0[n_] / a[n_out, n_])
-    n_in = np.intersect1d(np.where(- a0 / a[n_out] == minimal)[0], n_)[0]
-    return n_in + 2, n_out + 1
+def print_task(A, B, C):
+    print("\n##### УСЛОВИЕ #####\n")
+    print("Коэффициенты целевой функции:", C,
+          "Матрица условий:", A, "Вектор ограничений:", B, sep="\n")
 
 
 def print_results(simplex_table):
     """ Выводит ответ КЗЛП по итоговой симплекс таблице"""
+    print("\n##### ОТВЕТ #####\n")
     print("Итоговое значение целевой функции:", np.around(simplex_table[0, 1], decimals=2))
     for i in range(1, simplex_table.shape[1] - 1):
         if i in simplex_table[1:, 0]:
@@ -108,9 +120,11 @@ def print_results(simplex_table):
 
 def do_simplex(A, B, C):
     """ Основная функция двойственного симплекс метода """
-    print("\n##### РЕШЕНИЕ #####\n")
+    print_task(A, B, C)
+
     # ищем допустимый базис и получаем блоки симплекс таблицы
-    N, delta_1, c, a0 = find_accept_basis(A, C)
+    print("\n##### РЕШЕНИЕ #####\n")
+    N, delta_1, c, a0 = find_accept_basis(A, B, C)
     b = delta_1 @ B
     b0 = c @ b
     a = delta_1 @ A
@@ -125,18 +139,10 @@ def do_simplex(A, B, C):
         i += 1
         simplex_table = update_table(simplex_table)
         print("\n"+str(i)+"-й шаг:", np.around(simplex_table, decimals=PRINT_DEC), sep="\n")
-    print("\n##### ОТВЕТ #####\n")
+
     print_results(simplex_table)
 
 
-print("\n##### УСЛОВИЕ #####\n")
-print("Коэффициенты целевой функции:", C1, "Матрица условий:", A1, "Вектор ограничений:", B1, sep="\n")
 do_simplex(A1, B1, C1)
-
-print("\n##### УСЛОВИЕ #####\n")
-print("Коэффициенты целевой функции:", C2, "Матрица условий:", A2, "Вектор ограничений:", B2, sep="\n")
 do_simplex(A2, B2, C2)
-
-print("\n##### УСЛОВИЕ #####\n")
-print("Коэффициенты целевой функции:", C3, "Матрица условий:", A3, "Вектор ограничений:", B3, sep="\n")
 do_simplex(A3, B3, C3)
